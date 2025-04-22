@@ -2,6 +2,7 @@ import os
 import gzip
 import subprocess
 import pandas as pd
+from pandas import json_normalize
 
 # Caminho para a pasta com os arquivos .bson.gz e .json.gz
 PASTA_ORIGEM = r'caminho_para_a_pasta_onde_estão_os_arquivos_.bson.gz_e_.json.gz'
@@ -62,17 +63,15 @@ for nome_arquivo_json in os.listdir(PASTA_SAIDA_JSON):
         caminho_xlsx = os.path.join(PASTA_SAIDA_XLSX, f'{nome_base}.xlsx')
 
         try:
-            # Tenta carregar como JSON lines 
-            print(f'Convertendo para XLSX...')
+            # Carregar os dados JSON
             with open(caminho_json, 'r', encoding='utf-8') as f:
-                primeira_linha = f.readline()
-                f.seek(0)
-                if primeira_linha.strip().startswith('{'):
-                    df = pd.read_json(f, lines=True)
-                else:
-                    df = pd.read_json(f)
+                dados_json = pd.read_json(f, lines=True)
+            
+            # Flattening dos dados, caso existam objetos ou listas aninhadas
+            dados_achatados = json_normalize(dados_json.to_dict(orient='records'))
 
-            df.to_excel(caminho_xlsx, index=False, engine='openpyxl')
+            # Salvar em XLSX
+            dados_achatados.to_excel(caminho_xlsx, index=False, engine='openpyxl')
             print(f'Convertido para XLSX: {caminho_xlsx}')
         except Exception as e:
             print(f'Erro ao converter {nome_arquivo_json} para XLSX: {e}')
